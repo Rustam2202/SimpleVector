@@ -149,7 +149,15 @@ void Test2() {
 		v.PushBack(8);
 		assert(v[2] == 9);
 		assert(v[3] == 8);
-		assert(v[5] == 0);
+		assert(v[4] == 0);
+	}
+
+	// Insert
+	{
+		SimpleVector<int> v({ 1,3,6,8,13 });
+		v.Insert(v.begin()+1, 2);
+		assert(v[1] == 2);
+		assert(v[2] == 3);
 	}
 
 	// Erase
@@ -157,5 +165,9 @@ void Test2() {
 		SimpleVector<int> v({ 1,3,6 });
 		//v.Erase(&v[1]);
 		v.Erase(v.begin()+1);
+		assert(v[0] == 1);
+		assert(v[1] == 6);
 	}
+
+	
 }

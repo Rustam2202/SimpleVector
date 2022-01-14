@@ -21,10 +21,6 @@ public:
 		size_ = size;
 		capacity_ = size;
 		std::fill(begin(), end(), 0);
-
-		/*for (int i = 0; i < size; ++i) {
-			array_[i] = 0;
-		}*/
 	}
 
 	// Создаёт вектор из size элементов, инициализированных значением value
@@ -106,20 +102,20 @@ public:
 	// Изменяет размер массива. При увеличении размера новые элементы получают значение по умолчанию для типа Type
 	void Resize(size_t new_size) {
 		if (new_size <= size_) {
-			//size_ = new_size;
-			capacity_ = new_size;
+			size_ = new_size;
+			//capacity_ = new_size;
 		}
 		else if (new_size <= capacity_) {
 			std::fill(end(), &array_[new_size], 0);
-			//size_ = new_size;
-			capacity_ = new_size;
+			size_ = new_size;
+			//capacity_ = new_size;
 		}
 		else if (new_size > capacity_) {
 			ArrayPtr<Type> new_array(new_size);
 			std::fill(&new_array[0], &new_array[new_size], 0);
 			std::copy(begin(), end(), new_array.Get());
 			array_.swap(new_array);
-			//size_ = new_size;
+			size_ = new_size;
 			capacity_ = new_size;
 		}
 	}
@@ -169,8 +165,11 @@ public:
 	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
 	void PushBack(const Type& item) {
 		// Напишите тело самостоятельно
+
+		auto old_size = size_;
 		if (size_ >= capacity_) {
 			Resize(capacity_ * 2);
+			size_ = old_size;
 		}
 		array_[size_] = item;
 		size_++;
@@ -180,6 +179,67 @@ public:
 	// Если перед вставкой значения вектор был заполнен полностью, вместимость вектора должна увеличиться вдвое, а для вектора вместимостью 0 стать равной 1
 	Iterator Insert(ConstIterator pos, const Type& value) {
 		// Напишите тело самостоятельно
+
+		Type* it = std::find(begin(), end(), *pos);
+		//*it = 0;
+
+
+		using namespace std;
+		{
+			for (size_t i = 0; i < capacity_; ++i) {
+				cout << array_[i] << " ";
+			}cout << endl;
+		}
+
+		if (size_ < capacity_) {
+			std::copy_backward(it, end(), end() + 1);
+			*it = value;
+			size_++;
+		}
+		else {
+			SimpleVector<Type> temp(capacity_ * 2);
+			temp.size_ = 0;
+
+			std::copy(begin(), it, temp.begin());
+			temp.size_;
+
+			{
+				for (size_t i = 0; i < temp.GetCapacity(); ++i) {
+					cout << temp[i] << " ";
+				}cout << endl;
+			}
+
+			temp.PushBack(value);
+
+			{
+				for (size_t i = 0; i < temp.GetCapacity(); ++i) {
+					cout << temp[i] << " ";
+				}cout << endl;
+			}
+
+			std::copy(it, end(), temp.end());
+
+			{
+				for (size_t i = 0; i < temp.GetCapacity(); ++i) {
+					cout << temp[i] << " ";
+				}cout << endl;
+			}
+
+			std::swap(*this,temp);
+			size_++;
+			capacity_ *= 2;
+
+			{
+				for (size_t i = 0; i < capacity_; ++i) {
+					cout << array_[i] << " ";
+				}cout << endl;
+			}
+		}
+
+
+
+		size_++;
+		return 0;
 	}
 
 	// "Удаляет" последний элемент вектора. Вектор не должен быть пустым
@@ -192,14 +252,15 @@ public:
 
 	// Удаляет элемент вектора в указанной позиции
 	Iterator Erase(ConstIterator pos) {
-		using namespace std;
+		//using namespace std;
 		// Напишите тело самостоятельно
 		SimpleVector<Type> temp(size_);
-		//auto a = begin();
-		//int* b = pos;
-		std::copy(pos, cend(), temp.begin());
+
+		//cout << array_[0] << " " << array_[1] << " " << array_[2] << endl;
+		std::copy(pos + 1, cend(), temp.begin());
 		//cout << temp[0] << " " << temp[1] << endl;
-		std::copy(temp.begin(), temp.end());
+		std::copy(temp.cbegin(), temp.cend(), (int*)pos);
+		//cout << array_[0] << " " << array_[1] << " " << array_[2] << endl;
 		//std::copy(temp.begin(), temp.end(), end());
 		size_--;
 		return 0;
