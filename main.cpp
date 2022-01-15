@@ -4,8 +4,11 @@
 #include "tests.h"
 
 int main() {
-    Test1();
-    Test2();
+	TestReserveConstructor();
+	TestReserveMethod();
 
-    return 0;
+	Test1();
+	Test2();
+
+	return 0;
 }

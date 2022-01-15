@@ -7,6 +7,22 @@
 #include <iostream>
 #include <stdexcept>
 
+class ReserveProxyObj {
+public:
+	ReserveProxyObj(size_t size) {
+		size_ = size;
+	}
+	size_t GetSize() {
+		return size_;
+	}
+private:
+	size_t size_ = 0;
+};
+
+ReserveProxyObj Reserve(size_t capacity_to_reserve) {
+	return ReserveProxyObj(capacity_to_reserve);
+}
+
 template <typename Type>
 class SimpleVector {
 public:
@@ -20,6 +36,13 @@ public:
 		SimpleVector(size_t size) : array_(size) {
 		size_ = size;
 		capacity_ = size;
+		std::fill(begin(), end(), 0);
+	}
+
+	// Конструктор сразу резервирует память
+	SimpleVector(ReserveProxyObj other) : array_(other.GetSize()) {
+		size_ = 0;
+		capacity_ = other.GetSize();
 		std::fill(begin(), end(), 0);
 	}
 
@@ -248,6 +271,19 @@ public:
 		array_.swap(temp.array_);
 		size_--;
 		return &array_[index];
+	}
+
+	void Reserve(size_t new_capacity) {
+		if (capacity_ == 0) {
+			ArrayPtr<Type> new_arr(new_capacity);
+			array_.swap(new_arr);
+			size_ = 0;
+			capacity_ = new_capacity;
+		}
+		if (new_capacity > capacity_) {
+			capacity_ = new_capacity;
+		}
+	
 	}
 
 	// Обменивает значение с другим вектором
