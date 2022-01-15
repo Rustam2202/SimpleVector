@@ -42,11 +42,12 @@ public:
 	}
 
 	// Конструктор копирования
-	SimpleVector(const SimpleVector& other) : array_(other.GetCapacity()) {
+	SimpleVector(const SimpleVector& other) : array_(other.capacity_) {
 		// Напишите тело конструктора самостоятельно
-		std::copy(other.begin(), other.end(), begin());
-		size_ = other.size_;
-		capacity_ = other.GetCapacity();
+		SimpleVector<Type> temp(other.capacity_);
+		temp.size_ = other.size_;
+		std::copy(other.begin(), other.end(), temp.begin());
+		swap(temp);
 	}
 
 	// Возвращает количество элементов в массиве
@@ -153,11 +154,9 @@ public:
 	SimpleVector& operator=(const SimpleVector& rhs) {
 		// Напишите тело конструктора самостоятельно
 		if (this != &rhs) {
-			SimpleVector<Type> tmp(rhs);
-			std::copy(rhs.begin(), rhs.end(), array_.Get());
-			size_ = rhs.GetSize();
-
-			//swap(tmp);
+			SimpleVector<Type> temp(rhs);
+			std::copy(rhs.begin(), rhs.end(), temp.begin());
+			swap(temp);
 		}
 		return *this;
 	}
@@ -165,6 +164,12 @@ public:
 	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
 	void PushBack(const Type& item) {
 		// Напишите тело самостоятельно
+		if (capacity_ == 0) {
+			ArrayPtr<Type> arr_ptr(1);
+			array_.swap(arr_ptr);
+			capacity_ = 1;
+			size_ = 0;
+		}
 
 		auto old_size = size_;
 		if (size_ >= capacity_) {
@@ -180,66 +185,42 @@ public:
 	Iterator Insert(ConstIterator pos, const Type& value) {
 		// Напишите тело самостоятельно
 
-		Type* it = std::find(begin(), end(), *pos);
-		//*it = 0;
-
-
-		using namespace std;
-		{
-			for (size_t i = 0; i < capacity_; ++i) {
-				cout << array_[i] << " ";
-			}cout << endl;
+		size_t index = 0;
+		Type* it = begin();
+		while (it != pos) {
+			it++;
+			index++;
 		}
 
 		if (size_ < capacity_) {
-			std::copy_backward(it, end(), end() + 1);
-			*it = value;
+			SimpleVector<Type> temp(capacity_);
+			temp.size_ = size_;
+			std::copy(begin(), it, temp.begin());
+			temp.array_[index] = value;
+			std::copy(it, end(), &temp[index + 1]);
+			array_.swap(temp.array_);
 			size_++;
 		}
 		else {
+			if (capacity_ == 0) {
+				ArrayPtr<Type> arr_ptr(1);
+				array_.swap(arr_ptr);
+				capacity_ = 1;
+				size_ = 0;
+				it = begin();
+			}
+
 			SimpleVector<Type> temp(capacity_ * 2);
-			temp.size_ = 0;
-
+			temp.size_ = size_;
 			std::copy(begin(), it, temp.begin());
-			temp.size_;
-
-			{
-				for (size_t i = 0; i < temp.GetCapacity(); ++i) {
-					cout << temp[i] << " ";
-				}cout << endl;
-			}
-
-			temp.PushBack(value);
-
-			{
-				for (size_t i = 0; i < temp.GetCapacity(); ++i) {
-					cout << temp[i] << " ";
-				}cout << endl;
-			}
-
-			std::copy(it, end(), temp.end());
-
-			{
-				for (size_t i = 0; i < temp.GetCapacity(); ++i) {
-					cout << temp[i] << " ";
-				}cout << endl;
-			}
-
-			std::swap(*this,temp);
+			temp[index] = value;
+			std::copy(it, end(), &temp[index + 1]);
+			array_.swap(temp.array_);
+			std::swap(capacity_, temp.capacity_);
 			size_++;
-			capacity_ *= 2;
 
-			{
-				for (size_t i = 0; i < capacity_; ++i) {
-					cout << array_[i] << " ";
-				}cout << endl;
-			}
 		}
-
-
-
-		size_++;
-		return 0;
+		return &array_[index];
 	}
 
 	// "Удаляет" последний элемент вектора. Вектор не должен быть пустым
@@ -252,29 +233,46 @@ public:
 
 	// Удаляет элемент вектора в указанной позиции
 	Iterator Erase(ConstIterator pos) {
-		//using namespace std;
 		// Напишите тело самостоятельно
-		SimpleVector<Type> temp(size_);
+		size_t index = 0;
+		Type* it = begin();
+		while (it != pos) {
+			it++;
+			index++;
+		}
 
-		//cout << array_[0] << " " << array_[1] << " " << array_[2] << endl;
-		std::copy(pos + 1, cend(), temp.begin());
-		//cout << temp[0] << " " << temp[1] << endl;
-		std::copy(temp.cbegin(), temp.cend(), (int*)pos);
-		//cout << array_[0] << " " << array_[1] << " " << array_[2] << endl;
-		//std::copy(temp.begin(), temp.end(), end());
+		SimpleVector<Type> temp(capacity_);
+
+		std::copy(begin(), it, temp.begin());
+		std::copy(it + 1, end(), &temp[index]);
+		array_.swap(temp.array_);
 		size_--;
-		return 0;
+		return &array_[index];
 	}
 
 	// Обменивает значение с другим вектором
 	void swap(SimpleVector& other) noexcept {
 		// Напишите тело самостоятельно
+		array_.swap(other.array_);
+		std::swap(size_, other.size_);
+		std::swap(capacity_, other.capacity_);
+	}
+
+	// Показать содержимое массива
+	void Show() {
+		using namespace std;
+		for (size_t i = 0; i < size_; ++i) {
+			cout << array_[i] << " ";
+		}
+		cout << "capacity = " << capacity_ << endl;
 	}
 
 private:
 	ArrayPtr<Type> array_;
 	size_t size_ = 0;
 	size_t capacity_ = 0;
+
+
 };
 
 template <typename Type>

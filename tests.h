@@ -2,10 +2,6 @@
 #include <cassert>
 #include <stdexcept>
 
-// У функции, объявленной со спецификатором inline, может быть несколько
-// идентичных определений в разных единицах трансляции.
-// Обычно inline помечают функции, чьё тело находится в заголовочном файле,
-// чтобы при подключении этого файла из разных единиц трансляции не возникало ошибок компоновки
 inline void Test1() {
 	// Инициализация конструктором по умолчанию
 	{
@@ -41,7 +37,6 @@ inline void Test1() {
 		SimpleVector<int> v{ 1, 2, 3 };
 		assert(v.GetSize() == 3);
 		assert(v.GetCapacity() == 3);
-		assert(v[1] == 2);
 		assert(v[2] == 3);
 	}
 
@@ -119,55 +114,127 @@ inline void Test1() {
 	}
 }
 
-void Test2() {
+inline void Test2() {
+	// PushBack
+	{
+		SimpleVector<int> v(1);
+		v.PushBack(42);
+		assert(v.GetSize() == 2);
+		assert(v.GetCapacity() >= v.GetSize());
+		assert(v[0] == 0);
+		assert(v[1] == 42);
+	}
+
+	// Если хватает места, PushBack не увеличивает Capacity
+	{
+		SimpleVector<int> v(2);
+		v.Resize(1);
+		const size_t old_capacity = v.GetCapacity();
+		v.PushBack(123);
+		assert(v.GetSize() == 2);
+		assert(v.GetCapacity() == old_capacity);
+	}
+
+	// PopBack
+	{
+		SimpleVector<int> v{ 0, 1, 2, 3 };
+		const size_t old_capacity = v.GetCapacity();
+		const auto old_begin = v.begin();
+		v.PopBack();
+		assert(v.GetCapacity() == old_capacity);
+		assert(v.begin() == old_begin);
+		assert((v == SimpleVector<int>{0, 1, 2}));
+	}
 
 	// Конструктор копирования
 	{
-		SimpleVector<int> v({ 1,5,7 });
-		SimpleVector<int> c(v);
-		assert(c[0] == 1);
-		assert(c[1] == 5);
-		assert(c[2] == 7);
-		assert(c.GetSize() == 3);
+		SimpleVector<int> numbers{ 1, 2, 3 };
+		auto numbers_copy(numbers);
+		assert(&numbers_copy[0] != &numbers[0]);
+		assert(numbers_copy.GetSize() == numbers.GetSize());
+		for (size_t i = 0; i < numbers.GetSize(); ++i) {
+			assert(numbers_copy[i] == numbers[i]);
+			assert(&numbers_copy[i] != &numbers[i]);
+		}
+
+		SimpleVector<int> n{ 3,5,7 };
+		n.Erase(n.begin() + 1);
+		SimpleVector<int> n_copy(n);
 	}
 
-	// Оператор присвивания
+	// Сравнение
 	{
-		SimpleVector<char> v(3, 'w');
-		SimpleVector<char> b(2, 'b');
-		SimpleVector<char> e(5, 'e');
-		SimpleVector<char> c = v;
-		assert(c[1] == 'w');
-		assert(c.GetSize() == 3);
-		/*b = v;
-		e = v;*/
+		assert((SimpleVector{ 1, 2, 3 } == SimpleVector{ 1, 2, 3 }));
+		assert((SimpleVector{ 1, 2, 3 } != SimpleVector{ 1, 2, 2 }));
+
+		assert((SimpleVector{ 1, 2, 3 } < SimpleVector{ 1, 2, 3, 1 }));
+		assert((SimpleVector{ 1, 2, 3 } > SimpleVector{ 1, 2, 2, 1 }));
+
+		assert((SimpleVector{ 1, 2, 3 } >= SimpleVector{ 1, 2, 3 }));
+		assert((SimpleVector{ 1, 2, 4 } >= SimpleVector{ 1, 2, 3 }));
+		assert((SimpleVector{ 1, 2, 3 } <= SimpleVector{ 1, 2, 3 }));
+		assert((SimpleVector{ 1, 2, 3 } <= SimpleVector{ 1, 2, 4 }));
 	}
 
-	// PushBack
+	// Обмен значений векторов
 	{
-		SimpleVector<int> v(3, 9);
-		v.PushBack(8);
-		assert(v[2] == 9);
-		assert(v[3] == 8);
-		assert(v[4] == 0);
+		SimpleVector<int> v1{ 42, 666 };
+		SimpleVector<int> v2;
+		v2.PushBack(0);
+		v2.PushBack(1);
+		v2.PushBack(2);
+		const int* const begin1 = &v1[0];
+		const int* const begin2 = &v2[0];
+
+		const size_t capacity1 = v1.GetCapacity();
+		const size_t capacity2 = v2.GetCapacity();
+
+		const size_t size1 = v1.GetSize();
+		const size_t size2 = v2.GetSize();
+
+		static_assert(noexcept(v1.swap(v2)));
+		v1.swap(v2);
+		assert(&v2[0] == begin1);
+		assert(&v1[0] == begin2);
+		assert(v1.GetSize() == size2);
+		assert(v2.GetSize() == size1);
+		assert(v1.GetCapacity() == capacity2);
+		assert(v2.GetCapacity() == capacity1);
 	}
 
-	// Insert
+	// Присваивание
 	{
-		SimpleVector<int> v({ 1,3,6,8,13 });
-		v.Insert(v.begin()+1, 2);
-		assert(v[1] == 2);
-		assert(v[2] == 3);
+		SimpleVector<int> src_vector{ 1, 2, 3, 4 };
+		SimpleVector<int> dst_vector{ 1, 2, 3, 4, 5, 6 };
+		dst_vector = src_vector;
+		assert(dst_vector == src_vector);
 	}
 
-	// Erase
+	// Вставка элементов
 	{
-		SimpleVector<int> v({ 1,3,6 });
-		//v.Erase(&v[1]);
-		v.Erase(v.begin()+1);
-		assert(v[0] == 1);
-		assert(v[1] == 6);
+		SimpleVector<int> v{ 1, 2, 3, 4 };
+		auto it_42 = v.Insert(v.begin() + 2, 42);
+		assert((v == SimpleVector<int>{1, 2, 42, 3, 4}));
+		assert(v.GetSize() == 5);
+
+		auto it_3 = v.Erase(v.begin() + 3);
+		assert((v == SimpleVector<int>{1, 2, 42, 4}));
+		auto it_minus3 = v.Insert(v.begin(), -3);
+		assert((v == SimpleVector<int>{ -3, 1, 2, 42, 4}));
+
+		auto it_99 = v.Insert(v.end(), 99);
+		assert((v == SimpleVector<int>{-3, 1, 2, 42, 4, 99}));
+
+		SimpleVector<int> empty_vector;
+		empty_vector.Insert(empty_vector.begin(), 7);
+		assert(empty_vector == SimpleVector<int>{7});
+		assert(empty_vector.GetSize() == 1);
 	}
 
-	
+	// Удаление элементов
+	{
+		SimpleVector<int> v{ 1, 2, 3, 4 };
+		v.Erase(v.cbegin() + 2);
+		assert((v == SimpleVector<int>{1, 2, 4}));
+	}
 }
