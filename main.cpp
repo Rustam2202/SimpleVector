@@ -10,5 +10,15 @@ int main() {
 	Test1();
 	Test2();
 
+    TestTemporaryObjConstructor();
+    TestTemporaryObjOperator();
+    TestNamedMoveConstructor();
+    TestNamedMoveOperator();
+   // TestNoncopiableMoveConstructor();
+   // TestNoncopiablePushBack();
+   // TestNoncopiableInsert();
+   // TestNoncopiableErase();
+    return 0;
+
 	return 0;
 }

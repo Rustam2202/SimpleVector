@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <initializer_list>
+#include <iterator>
 #include <iostream>
 #include <stdexcept>
 
@@ -65,12 +66,17 @@ public:
 	}
 
 	// Конструктор копирования
-	SimpleVector(const SimpleVector& other) : array_(other.capacity_) {
-		// Напишите тело конструктора самостоятельно
-		SimpleVector<Type> temp(other.capacity_);
+	SimpleVector(const SimpleVector& other) : array_(std::move(other.capacity_)) {
+
+		SimpleVector<Type> temp(std::move(other.capacity_));
+		temp.size_ = std::move(other.size_);
+		std::copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()), temp.begin());
+		swap(temp);
+
+		/*SimpleVector<Type> temp(other.capacity_);
 		temp.size_ = other.size_;
 		std::copy(other.begin(), other.end(), temp.begin());
-		swap(temp);
+		swap(temp);*/
 	}
 
 	// Возвращает количество элементов в массиве
@@ -127,12 +133,10 @@ public:
 	void Resize(size_t new_size) {
 		if (new_size <= size_) {
 			size_ = new_size;
-			//capacity_ = new_size;
 		}
 		else if (new_size <= capacity_) {
 			std::fill(end(), &array_[new_size], 0);
 			size_ = new_size;
-			//capacity_ = new_size;
 		}
 		else if (new_size > capacity_) {
 			ArrayPtr<Type> new_array(new_size);
@@ -175,7 +179,6 @@ public:
 	}
 
 	SimpleVector& operator=(const SimpleVector& rhs) {
-		// Напишите тело конструктора самостоятельно
 		if (this != &rhs) {
 			SimpleVector<Type> temp(rhs);
 			std::copy(rhs.begin(), rhs.end(), temp.begin());
@@ -186,7 +189,6 @@ public:
 
 	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
 	void PushBack(const Type& item) {
-		// Напишите тело самостоятельно
 		if (capacity_ == 0) {
 			ArrayPtr<Type> arr_ptr(1);
 			array_.swap(arr_ptr);
@@ -206,7 +208,6 @@ public:
 	// Вставляет значение value в позицию pos. Возвращает итератор на вставленное значение
 	// Если перед вставкой значения вектор был заполнен полностью, вместимость вектора должна увеличиться вдвое, а для вектора вместимостью 0 стать равной 1
 	Iterator Insert(ConstIterator pos, const Type& value) {
-		// Напишите тело самостоятельно
 
 		size_t index = 0;
 		Type* it = begin();
@@ -241,14 +242,12 @@ public:
 			array_.swap(temp.array_);
 			std::swap(capacity_, temp.capacity_);
 			size_++;
-
 		}
 		return &array_[index];
 	}
 
 	// "Удаляет" последний элемент вектора. Вектор не должен быть пустым
 	void PopBack() noexcept {
-		// Напишите тело самостоятельно
 		if (!IsEmpty()) {
 			size_--;
 		}
@@ -256,7 +255,6 @@ public:
 
 	// Удаляет элемент вектора в указанной позиции
 	Iterator Erase(ConstIterator pos) {
-		// Напишите тело самостоятельно
 		size_t index = 0;
 		Type* it = begin();
 		while (it != pos) {
@@ -283,12 +281,10 @@ public:
 		if (new_capacity > capacity_) {
 			capacity_ = new_capacity;
 		}
-	
 	}
 
 	// Обменивает значение с другим вектором
 	void swap(SimpleVector& other) noexcept {
-		// Напишите тело самостоятельно
 		array_.swap(other.array_);
 		std::swap(size_, other.size_);
 		std::swap(capacity_, other.capacity_);
@@ -307,42 +303,34 @@ private:
 	ArrayPtr<Type> array_;
 	size_t size_ = 0;
 	size_t capacity_ = 0;
-
-
 };
 
 template <typename Type>
 inline bool operator==(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
-	// Заглушка. Напишите тело самостоятельно
 	return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template <typename Type>
 inline bool operator!=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
-	// Заглушка. Напишите тело самостоятельно
 	return !std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template <typename Type>
 inline bool operator<(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
-	// Заглушка. Напишите тело самостоятельно
 	return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template <typename Type>
 inline bool operator<=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
-	// Заглушка. Напишите тело самостоятельно
 	return !std::lexicographical_compare(rhs.begin(), rhs.end(), lhs.begin(), lhs.end());
 }
 
 template <typename Type>
 inline bool operator>(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
-	// Заглушка. Напишите тело самостоятельно
 	return std::lexicographical_compare(rhs.begin(), rhs.end(), lhs.begin(), lhs.end());
 }
 
 template <typename Type>
 inline bool operator>=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
-	// Заглушка. Напишите тело самостоятельно
 	return !std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
