@@ -346,19 +346,20 @@ public:
 		}
 		else if (new_size > capacity_) {
 			ArrayPtr<Type> temp(new_size);
-			std::fill(&temp[0], &temp[new_size], 0);
+			//std::fill(&temp[0], &temp[new_size], 0);
+
+			auto a = std::move(temp.Get());
+			auto b = std::move(*a);
+			auto c = &temp;
+			
+			//std::fill(&temp[0], &temp[new_size], 0);
+			
+
 			//	std::copy(begin(), end(), temp.Get());
 			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(end()), temp.Get());
 			array_.swap(temp);
 			size_ = new_size;
 			capacity_ = new_size;
-
-			/*SimpleVector<Type> temp(new_size);
-			std::fill(temp.begin(), temp.end(), 0);
-			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(end()), temp.begin());
-			swap(temp);
-			size_ = new_size;
-			capacity_ = new_size;*/
 		}
 	}
 
