@@ -14,11 +14,10 @@ int main() {
     TestTemporaryObjOperator();
     TestNamedMoveConstructor();
     TestNamedMoveOperator();
-   // TestNoncopiableMoveConstructor();
-   // TestNoncopiablePushBack();
-   // TestNoncopiableInsert();
-   // TestNoncopiableErase();
+    TestNoncopiableMoveConstructor();
+    TestNoncopiablePushBack();
+    TestNoncopiableInsert();
+    TestNoncopiableErase();
+    TestNoncopiableResize();
     return 0;
-
-	return 0;
 }

@@ -66,17 +66,37 @@ public:
 	}
 
 	// Конструктор копирования
-	SimpleVector(const SimpleVector& other) : array_(std::move(other.capacity_)) {
+	SimpleVector(const SimpleVector& other) : array_(other.capacity_) {
 
-		SimpleVector<Type> temp(std::move(other.capacity_));
-		temp.size_ = std::move(other.size_);
-		std::copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()), temp.begin());
-		swap(temp);
-
-		/*SimpleVector<Type> temp(other.capacity_);
+		SimpleVector<Type> temp(other.capacity_);
 		temp.size_ = other.size_;
 		std::copy(other.begin(), other.end(), temp.begin());
-		swap(temp);*/
+		swap(temp);
+	}
+
+	// Конструктор перемещения
+	SimpleVector(SimpleVector&& other) : array_(other.capacity_) {
+		swap(other);
+	}
+
+	// Оператор присваивания
+	SimpleVector& operator=(const SimpleVector& rhs) {
+		if (this != &rhs) {
+			SimpleVector<Type> temp(rhs);
+			std::copy(rhs.begin(), rhs.end(), temp.begin());
+			swap(temp);
+		}
+		return *this;
+	}
+
+	// Оператор перемещения
+	SimpleVector& operator=(SimpleVector&& rhs) {
+		if (this != &rhs) {
+			SimpleVector<Type> temp(rhs);
+			std::copy(rhs.begin(), rhs.end(), temp.begin());
+			swap(temp);
+		}
+		return *this;
 	}
 
 	// Возвращает количество элементов в массиве
@@ -129,25 +149,6 @@ public:
 		size_ = 0;
 	}
 
-	// Изменяет размер массива. При увеличении размера новые элементы получают значение по умолчанию для типа Type
-	void Resize(size_t new_size) {
-		if (new_size <= size_) {
-			size_ = new_size;
-		}
-		else if (new_size <= capacity_) {
-			std::fill(end(), &array_[new_size], 0);
-			size_ = new_size;
-		}
-		else if (new_size > capacity_) {
-			ArrayPtr<Type> new_array(new_size);
-			std::fill(&new_array[0], &new_array[new_size], 0);
-			std::copy(begin(), end(), new_array.Get());
-			array_.swap(new_array);
-			size_ = new_size;
-			capacity_ = new_size;
-		}
-	}
-
 	// Возвращает итератор на начало массива. Для пустого массива может быть равен (или не равен) nullptr
 	Iterator begin() noexcept {
 		return &array_[0];
@@ -178,31 +179,22 @@ public:
 		return &array_[size_];
 	}
 
-	SimpleVector& operator=(const SimpleVector& rhs) {
-		if (this != &rhs) {
-			SimpleVector<Type> temp(rhs);
-			std::copy(rhs.begin(), rhs.end(), temp.begin());
-			swap(temp);
-		}
-		return *this;
-	}
-
-	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
-	void PushBack(const Type& item) {
-		if (capacity_ == 0) {
-			ArrayPtr<Type> arr_ptr(1);
-			array_.swap(arr_ptr);
-			capacity_ = 1;
-			size_ = 0;
+	Iterator Erase(ConstIterator pos) {
+		size_t index = 0;
+		Type* it = begin();
+		while (it != pos) {
+			it++;
+			index++;
 		}
 
-		auto old_size = size_;
-		if (size_ >= capacity_) {
-			Resize(capacity_ * 2);
-			size_ = old_size;
-		}
-		array_[size_] = item;
-		size_++;
+		SimpleVector<Type> temp(capacity_);
+		//std::copy(begin(), it, temp.begin());
+		//std::copy(it + 1, end(), &temp[index]);
+		std::copy(std::make_move_iterator(begin()), std::make_move_iterator(it), temp.begin());
+		std::copy(std::make_move_iterator(it + 1), std::make_move_iterator(end()), &temp[index]);
+		array_.swap(temp.array_);
+		size_--;
+		return &array_[index];
 	}
 
 	// Вставляет значение value в позицию pos. Возвращает итератор на вставленное значение
@@ -246,15 +238,8 @@ public:
 		return &array_[index];
 	}
 
-	// "Удаляет" последний элемент вектора. Вектор не должен быть пустым
-	void PopBack() noexcept {
-		if (!IsEmpty()) {
-			size_--;
-		}
-	}
+	Iterator Insert(ConstIterator pos, Type&& value) {
 
-	// Удаляет элемент вектора в указанной позиции
-	Iterator Erase(ConstIterator pos) {
 		size_t index = 0;
 		Type* it = begin();
 		while (it != pos) {
@@ -262,13 +247,80 @@ public:
 			index++;
 		}
 
-		SimpleVector<Type> temp(capacity_);
+		if (size_ < capacity_) {
+			SimpleVector<Type> temp(capacity_);
+			temp.size_ = size_;
+			//std::copy(begin(), it, temp.begin());
+			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(it), temp.begin());
+			temp.array_[index] = std::move(value);
+			//std::copy(it, end(), &temp[index + 1]);
+			std::copy(std::make_move_iterator(it), std::make_move_iterator(end()), &temp[index + 1]);
+			array_.swap(temp.array_);
+			size_++;
+		}
+		else {
+			if (capacity_ == 0) {
+				ArrayPtr<Type> arr_ptr(1);
+				array_.swap(arr_ptr);
+				capacity_ = 1;
+				size_ = 0;
+				it = begin();
+			}
 
-		std::copy(begin(), it, temp.begin());
-		std::copy(it + 1, end(), &temp[index]);
-		array_.swap(temp.array_);
-		size_--;
+			SimpleVector<Type> temp(capacity_ * 2);
+			temp.size_ = size_;
+			//	std::copy(begin(), it, temp.begin());
+			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(it), temp.begin());
+			temp[index] = std::move(value);
+			//	std::copy(it, end(), &temp[index + 1]);
+			std::copy(std::make_move_iterator(it), std::make_move_iterator(end()), &temp[index + 1]);
+			array_.swap(temp.array_);
+			std::swap(capacity_, temp.capacity_);
+			size_++;
+		}
 		return &array_[index];
+	}
+
+	// "Удаляет" последний элемент вектора. Вектор не должен быть пустым
+	void PopBack() noexcept {
+		if (!IsEmpty()) {
+			size_--;
+		}
+	}
+
+	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
+	void PushBack(const Type& item) {
+		if (capacity_ == 0) {
+			ArrayPtr<Type> arr_ptr(1);
+			array_.swap(arr_ptr);
+			capacity_ = 1;
+			size_ = 0;
+		}
+
+		auto old_size = size_;
+		if (size_ >= capacity_) {
+			Resize(capacity_ * 2);
+			size_ = old_size;
+		}
+		array_[size_] = item;
+		size_++;
+	}
+
+	void PushBack(Type&& item) {
+		if (capacity_ == 0) {
+			ArrayPtr<Type> arr_ptr(1);
+			array_.swap(arr_ptr);
+			capacity_ = 1;
+			size_ = 0;
+		}
+
+		auto old_size = size_;
+		if (size_ >= capacity_) {
+			Resize(capacity_ * 2);
+			size_ = old_size;
+		}
+		array_[size_] = std::move(item);
+		size_++;
 	}
 
 	void Reserve(size_t new_capacity) {
@@ -280,6 +332,33 @@ public:
 		}
 		if (new_capacity > capacity_) {
 			capacity_ = new_capacity;
+		}
+	}
+
+	// Изменяет размер массива. При увеличении размера новые элементы получают значение по умолчанию для типа Type
+	void Resize(size_t new_size) {
+		if (new_size <= size_) {
+			size_ = new_size;
+		}
+		else if (new_size <= capacity_) {
+			std::fill(end(), &array_[new_size], 0);
+			size_ = new_size;
+		}
+		else if (new_size > capacity_) {
+			ArrayPtr<Type> temp(new_size);
+			std::fill(&temp[0], &temp[new_size], 0);
+			//	std::copy(begin(), end(), temp.Get());
+			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(end()), temp.Get());
+			array_.swap(temp);
+			size_ = new_size;
+			capacity_ = new_size;
+
+			/*SimpleVector<Type> temp(new_size);
+			std::fill(temp.begin(), temp.end(), 0);
+			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(end()), temp.begin());
+			swap(temp);
+			size_ = new_size;
+			capacity_ = new_size;*/
 		}
 	}
 
