@@ -9,7 +9,7 @@ public:
 	// Создаёт в куче массив из size элементов типа Type. Если size == 0, поле raw_ptr_ должно быть равно nullptr
 	explicit ArrayPtr(size_t size) {
 		if (!size == 0) {
-			Type* arr = new Type[size];
+			Type* arr = new Type[size]{};
 			raw_ptr_ = arr;
 		}
 	}

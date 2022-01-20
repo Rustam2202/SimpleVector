@@ -37,14 +37,14 @@ public:
 		SimpleVector(size_t size) : array_(size) {
 		size_ = size;
 		capacity_ = size;
-		std::fill(begin(), end(), 0);
+		//std::fill(begin(), end(), 0);
 	}
 
 	// Конструктор сразу резервирует память
 	SimpleVector(ReserveProxyObj other) : array_(other.GetSize()) {
 		size_ = 0;
 		capacity_ = other.GetSize();
-		std::fill(begin(), end(), 0);
+		//std::fill(begin(), end(), 0);
 	}
 
 	// Создаёт вектор из size элементов, инициализированных значением value
@@ -67,7 +67,6 @@ public:
 
 	// Конструктор копирования
 	SimpleVector(const SimpleVector& other) : array_(other.capacity_) {
-
 		SimpleVector<Type> temp(other.capacity_);
 		temp.size_ = other.size_;
 		std::copy(other.begin(), other.end(), temp.begin());
@@ -188,8 +187,6 @@ public:
 		}
 
 		SimpleVector<Type> temp(capacity_);
-		//std::copy(begin(), it, temp.begin());
-		//std::copy(it + 1, end(), &temp[index]);
 		std::copy(std::make_move_iterator(begin()), std::make_move_iterator(it), temp.begin());
 		std::copy(std::make_move_iterator(it + 1), std::make_move_iterator(end()), &temp[index]);
 		array_.swap(temp.array_);
@@ -250,10 +247,8 @@ public:
 		if (size_ < capacity_) {
 			SimpleVector<Type> temp(capacity_);
 			temp.size_ = size_;
-			//std::copy(begin(), it, temp.begin());
 			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(it), temp.begin());
 			temp.array_[index] = std::move(value);
-			//std::copy(it, end(), &temp[index + 1]);
 			std::copy(std::make_move_iterator(it), std::make_move_iterator(end()), &temp[index + 1]);
 			array_.swap(temp.array_);
 			size_++;
@@ -269,10 +264,8 @@ public:
 
 			SimpleVector<Type> temp(capacity_ * 2);
 			temp.size_ = size_;
-			//	std::copy(begin(), it, temp.begin());
 			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(it), temp.begin());
 			temp[index] = std::move(value);
-			//	std::copy(it, end(), &temp[index + 1]);
 			std::copy(std::make_move_iterator(it), std::make_move_iterator(end()), &temp[index + 1]);
 			array_.swap(temp.array_);
 			std::swap(capacity_, temp.capacity_);
@@ -341,24 +334,18 @@ public:
 			size_ = new_size;
 		}
 		else if (new_size <= capacity_) {
+		//	Type type{};
+		//	std::fill(end(), &array_[new_size], std::move(type));
 			std::fill(end(), &array_[new_size], 0);
 			size_ = new_size;
 		}
 		else if (new_size > capacity_) {
+
 			ArrayPtr<Type> temp(new_size);
-			std::fill(&temp[0], &temp[new_size], 0);
-			//	std::copy(begin(), end(), temp.Get());
 			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(end()), temp.Get());
 			array_.swap(temp);
 			size_ = new_size;
 			capacity_ = new_size;
-
-			/*SimpleVector<Type> temp(new_size);
-			std::fill(temp.begin(), temp.end(), 0);
-			std::copy(std::make_move_iterator(begin()), std::make_move_iterator(end()), temp.begin());
-			swap(temp);
-			size_ = new_size;
-			capacity_ = new_size;*/
 		}
 	}
 
