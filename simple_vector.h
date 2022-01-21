@@ -62,12 +62,6 @@ public:
 		size_ = init.size();
 		capacity_ = init.size();
 		std::copy(init.begin(), init.end(), &array_[0]);
-
-		//auto it = init.begin();
-		/*for (size_t i = 0; i < init.size(); ++i) {
-			array_[i] = *it;
-			it++;
-		}*/
 	}
 
 	// Конструктор копирования
@@ -120,37 +114,29 @@ public:
 
 	// Возвращает ссылку на элемент с индексом index
 	Type& operator[](size_t index) noexcept {
-		try {
+		assert(index <= capacity_);
+		return array_[index];
+
+	/*	try {
 			CheckIndex(index, capacity_);
 			return array_[index];
 		}
 		catch (const std::out_of_range& err) {
 			std::cout << err.what() << std::endl;
-		}
-
-		/*if (index > capacity_ - 1) {
-			throw std::invalid_argument("index exceed array capacity");
-		}
-		else {
-			return array_[index];
 		}*/
 	}
 
 	// Возвращает константную ссылку на элемент с индексом index
 	const Type& operator[](size_t index) const noexcept {
-		try {
+		assert(index <= capacity_);
+		return array_[index];
+
+		/*try {
 			CheckIndex(index, capacity_);
 			return array_[index];
 		}
 		catch (const std::out_of_range& err) {
 			std::cout << err.what() << std::endl;
-		}
-
-		/*if (index > capacity_ - 1) {
-			throw std::invalid_argument("index exceed array capacity");
-		}
-		else {
-			return array_[index];
 		}*/
 	}
 
@@ -187,7 +173,8 @@ public:
 
 	// Возвращает итератор на элемент, следующий за последним. Для пустого массива может быть равен (или не равен) nullptr
 	Iterator end() noexcept {
-		return &array_[size_];
+		//return &array_[size_];
+		return array_.Get() + size_;
 	}
 
 	// Возвращает константный итератор на начало массива. Для пустого массива может быть равен (или не равен) nullptr
@@ -198,7 +185,9 @@ public:
 
 	// Возвращает итератор на элемент, следующий за последним. Для пустого массива может быть равен (или не равен) nullptr
 	ConstIterator end() const noexcept {
-		return &array_[size_];
+		//return &array_[size_];
+		return array_.Get() + size_;
+
 	}
 
 	// Возвращает константный итератор на начало массива. Для пустого массива может быть равен (или не равен) nullptr
@@ -209,7 +198,9 @@ public:
 
 	// Возвращает итератор на элемент, следующий за последним. Для пустого массива может быть равен (или не равен) nullptr
 	ConstIterator cend() const noexcept {
-		return &array_[size_];
+		//return &array_[size_];
+		return array_.Get() + size_;
+
 	}
 
 	Iterator Erase(ConstIterator pos) {
@@ -324,9 +315,6 @@ public:
 	void PopBack() noexcept {
 		assert(!IsEmpty());
 		size_--;
-		/*if (!IsEmpty()) {
-			size_--;
-		}*/
 	}
 
 	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
@@ -382,8 +370,8 @@ public:
 			size_ = new_size;
 		}
 		else if (new_size <= capacity_) {
-			//	Type type{};
-			//	std::fill(end(), &array_[new_size], std::move(type));
+			//Type type{};
+			//std::fill(/*end()*/std::make_move_iterator (&array_[size_]), std::make_move_iterator(&array_[new_size]), Type{});
 			std::fill(end(), &array_[new_size], 0);
 			size_ = new_size;
 		}
