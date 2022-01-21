@@ -8,7 +8,7 @@ public:
 
 	// Создаёт в куче массив из size элементов типа Type. Если size == 0, поле raw_ptr_ должно быть равно nullptr
 	explicit ArrayPtr(size_t size) {
-		if (!size == 0) {
+		if (size != 0) {
 			Type* arr = new Type[size]{};
 			raw_ptr_ = arr;
 		}
@@ -67,9 +67,7 @@ public:
 
 	// Обменивается значениям указателя на массив с объектом other
 	void swap(ArrayPtr& other) noexcept {
-		Type* temp = other.Get();
-		other.raw_ptr_ = raw_ptr_;
-		raw_ptr_ = temp;
+		std::swap(raw_ptr_, other.raw_ptr_);
 	}
 
 private:

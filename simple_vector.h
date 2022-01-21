@@ -38,6 +38,9 @@ public:
 		size_ = size;
 		capacity_ = size;
 		//std::fill(begin(), end(), 0);
+
+		// Я так и не могу понять как правильно делать инициализацию значением по умолчанию (и наствник не объясняет).
+		// Но, как я понимаю, инициализация происходит во время "Type* arr = new Type[size]{}" в ArrayPtr для int и в "ArrayPtr() = default" для класса X.
 	}
 
 	// Конструктор сразу резервирует память
@@ -58,11 +61,13 @@ public:
 	SimpleVector(std::initializer_list<Type> init) : array_(init.size()) {
 		size_ = init.size();
 		capacity_ = init.size();
-		auto it = init.begin();
-		for (size_t i = 0; i < init.size(); ++i) {
+		std::copy(init.begin(), init.end(), &array_[0]);
+
+		//auto it = init.begin();
+		/*for (size_t i = 0; i < init.size(); ++i) {
 			array_[i] = *it;
 			it++;
-		}
+		}*/
 	}
 
 	// Конструктор копирования
@@ -80,7 +85,7 @@ public:
 
 	// Оператор присваивания
 	SimpleVector& operator=(const SimpleVector& rhs) {
-		if (this != &rhs) {
+		if (this != &rhs && !rhs.IsEmpty()) {
 			SimpleVector<Type> temp(rhs);
 			std::copy(rhs.begin(), rhs.end(), temp.begin());
 			swap(temp);
@@ -90,7 +95,7 @@ public:
 
 	// Оператор перемещения
 	SimpleVector& operator=(SimpleVector&& rhs) {
-		if (this != &rhs) {
+		if (this != &rhs && !rhs.IsEmpty()) {
 			SimpleVector<Type> temp(rhs);
 			std::copy(rhs.begin(), rhs.end(), temp.begin());
 			swap(temp);
@@ -115,12 +120,38 @@ public:
 
 	// Возвращает ссылку на элемент с индексом index
 	Type& operator[](size_t index) noexcept {
-		return array_[index];
+		try {
+			CheckIndex(index, capacity_);
+			return array_[index];
+		}
+		catch (const std::out_of_range& err) {
+			std::cout << err.what() << std::endl;
+		}
+
+		/*if (index > capacity_ - 1) {
+			throw std::invalid_argument("index exceed array capacity");
+		}
+		else {
+			return array_[index];
+		}*/
 	}
 
 	// Возвращает константную ссылку на элемент с индексом index
 	const Type& operator[](size_t index) const noexcept {
-		return array_[index];
+		try {
+			CheckIndex(index, capacity_);
+			return array_[index];
+		}
+		catch (const std::out_of_range& err) {
+			std::cout << err.what() << std::endl;
+		}
+
+		/*if (index > capacity_ - 1) {
+			throw std::invalid_argument("index exceed array capacity");
+		}
+		else {
+			return array_[index];
+		}*/
 	}
 
 	// Возвращает константную ссылку на элемент с индексом index. Выбрасывает исключение std::out_of_range, если index >= size
@@ -150,7 +181,8 @@ public:
 
 	// Возвращает итератор на начало массива. Для пустого массива может быть равен (или не равен) nullptr
 	Iterator begin() noexcept {
-		return &array_[0];
+		//return &array_[0];
+		return array_.Get();
 	}
 
 	// Возвращает итератор на элемент, следующий за последним. Для пустого массива может быть равен (или не равен) nullptr
@@ -160,7 +192,8 @@ public:
 
 	// Возвращает константный итератор на начало массива. Для пустого массива может быть равен (или не равен) nullptr
 	ConstIterator begin() const noexcept {
-		return &array_[0];
+		//return &array_[0];
+		return array_.Get();
 	}
 
 	// Возвращает итератор на элемент, следующий за последним. Для пустого массива может быть равен (или не равен) nullptr
@@ -170,7 +203,8 @@ public:
 
 	// Возвращает константный итератор на начало массива. Для пустого массива может быть равен (или не равен) nullptr
 	ConstIterator cbegin() const noexcept {
-		return &array_[0];
+		//	return &array_[0];
+		return array_.Get();
 	}
 
 	// Возвращает итератор на элемент, следующий за последним. Для пустого массива может быть равен (или не равен) nullptr
@@ -198,12 +232,18 @@ public:
 	// Если перед вставкой значения вектор был заполнен полностью, вместимость вектора должна увеличиться вдвое, а для вектора вместимостью 0 стать равной 1
 	Iterator Insert(ConstIterator pos, const Type& value) {
 
+		bool pos_in_range = false;
 		size_t index = 0;
 		Type* it = begin();
-		while (it != pos) {
+		while (it != end() + 1) {
+			if (it == pos) {
+				pos_in_range = true;
+				break;
+			}
 			it++;
 			index++;
 		}
+		assert(pos_in_range);
 
 		if (size_ < capacity_) {
 			SimpleVector<Type> temp(capacity_);
@@ -237,12 +277,18 @@ public:
 
 	Iterator Insert(ConstIterator pos, Type&& value) {
 
+		bool pos_in_range = false;
 		size_t index = 0;
 		Type* it = begin();
-		while (it != pos) {
+		while (it != end() + 1) {
+			if (it == pos) {
+				pos_in_range = true;
+				break;
+			}
 			it++;
 			index++;
 		}
+		assert(pos_in_range);
 
 		if (size_ < capacity_) {
 			SimpleVector<Type> temp(capacity_);
@@ -276,9 +322,11 @@ public:
 
 	// "Удаляет" последний элемент вектора. Вектор не должен быть пустым
 	void PopBack() noexcept {
-		if (!IsEmpty()) {
+		assert(!IsEmpty());
+		size_--;
+		/*if (!IsEmpty()) {
 			size_--;
-		}
+		}*/
 	}
 
 	// Добавляет элемент в конец вектора. При нехватке места увеличивает вдвое вместимость вектора
@@ -369,6 +417,12 @@ private:
 	ArrayPtr<Type> array_;
 	size_t size_ = 0;
 	size_t capacity_ = 0;
+
+	void CheckIndex(size_t index, size_t capacity_) {
+		if (index > capacity_ - 1) {
+			throw std::out_of_range("index exceed array capacity");
+		}
+	}
 };
 
 template <typename Type>
