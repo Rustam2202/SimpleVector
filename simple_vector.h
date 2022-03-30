@@ -37,17 +37,12 @@ public:
 		SimpleVector(size_t size) : array_(size) {
 		size_ = size;
 		capacity_ = size;
-		//std::fill(begin(), end(), 0);
-
-		// Я так и не могу понять как правильно делать инициализацию значением по умолчанию (и наствник не объясняет).
-		// Но, как я понимаю, инициализация происходит во время "Type* arr = new Type[size]{}" в ArrayPtr для int и в "ArrayPtr() = default" для класса X.
 	}
 
 	// Конструктор сразу резервирует память
 	SimpleVector(ReserveProxyObj other) : array_(other.GetSize()) {
 		size_ = 0;
 		capacity_ = other.GetSize();
-		//std::fill(begin(), end(), 0);
 	}
 
 	// Создаёт вектор из size элементов, инициализированных значением value
@@ -116,28 +111,12 @@ public:
 	Type& operator[](size_t index) noexcept {
 		assert(index <= capacity_);
 		return array_[index];
-
-	/*	try {
-			CheckIndex(index, capacity_);
-			return array_[index];
-		}
-		catch (const std::out_of_range& err) {
-			std::cout << err.what() << std::endl;
-		}*/
 	}
 
 	// Возвращает константную ссылку на элемент с индексом index
 	const Type& operator[](size_t index) const noexcept {
 		assert(index <= capacity_);
 		return array_[index];
-
-		/*try {
-			CheckIndex(index, capacity_);
-			return array_[index];
-		}
-		catch (const std::out_of_range& err) {
-			std::cout << err.what() << std::endl;
-		}*/
 	}
 
 	// Возвращает константную ссылку на элемент с индексом index. Выбрасывает исключение std::out_of_range, если index >= size
@@ -370,8 +349,6 @@ public:
 			size_ = new_size;
 		}
 		else if (new_size <= capacity_) {
-			//Type type{};
-			//std::fill(/*end()*/std::make_move_iterator (&array_[size_]), std::make_move_iterator(&array_[new_size]), Type{});
 			std::fill(end(), &array_[new_size], 0);
 			size_ = new_size;
 		}
